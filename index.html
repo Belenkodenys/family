@@ -400,8 +400,8 @@
   async function del(id) {
     if (role !== 'owner') return;
     const e = expenses.find(x => x.id === id);
-    if (!e || e.accepted) return;
-    if (!confirm('Удалить запись?')) return;
+    if (!e) return;
+    if (!confirm(e.accepted ? 'Удалить уже принятую запись?' : 'Удалить запись?')) return;
     expenses = expenses.filter(x => x.id !== id);
     await save();
     render();
@@ -410,7 +410,7 @@
   function editAmount(id) {
     if (role !== 'owner') return;
     const e = expenses.find(x => x.id === id);
-    if (!e || e.accepted) return;
+    if (!e) return;
 
     const el = document.querySelector(`[data-amount="${id}"]`);
     const current = e.amount;
@@ -438,7 +438,7 @@
   function editDate(id) {
     if (role !== 'owner') return;
     const e = expenses.find(x => x.id === id);
-    if (!e || e.accepted) return;
+    if (!e) return;
 
     const el = document.querySelector(`[data-date="${id}"]`);
     const current = new Date(e.date).toISOString().slice(0, 10);
@@ -489,21 +489,20 @@
       const canVerify = role === 'verifier';
 
       list.innerHTML = expenses.map(e => {
-        const editable = canEdit && !e.accepted;
         return `
           <div class="expense ${e.accepted ? 'accepted' : ''}">
             <div class="expense-info">
-              <div class="expense-amount ${e.accepted ? 'accepted' : ''} ${editable ? 'editable' : ''}"
+              <div class="expense-amount ${e.accepted ? 'accepted' : ''} ${canEdit ? 'editable' : ''}"
                    data-amount="${e.id}"
-                   ${editable ? `onclick="editAmount('${e.id}')"` : ''}>${fmt(e.amount)}</div>
-              <div class="expense-date ${editable ? 'editable' : ''}"
+                   ${canEdit ? `onclick="editAmount('${e.id}')"` : ''}>${fmt(e.amount)}</div>
+              <div class="expense-date ${canEdit ? 'editable' : ''}"
                    data-date="${e.id}"
-                   ${editable ? `onclick="editDate('${e.id}')"` : ''}>${fmtDate(e.date)}${e.accepted ? ' · ✓ принято' : ''}</div>
+                   ${canEdit ? `onclick="editDate('${e.id}')"` : ''}>${fmtDate(e.date)}${e.accepted ? ' · ✓ принято' : ''}</div>
             </div>
             <div class="expense-actions">
               ${canVerify && !e.accepted ? `<button class="accept-btn" onclick="accept('${e.id}')">Принято</button>` : ''}
               ${e.accepted ? '<span class="accepted-mark">✓</span>' : ''}
-              ${canEdit && !e.accepted ? `<button class="delete-btn" onclick="del('${e.id}')" title="Удалить">×</button>` : ''}
+              ${canEdit ? `<button class="delete-btn" onclick="del('${e.id}')" title="Удалить">×</button>` : ''}
             </div>
           </div>
         `;
