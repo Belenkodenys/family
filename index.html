@@ -23,48 +23,7 @@
 
   .container { max-width: 520px; margin: 0 auto; }
 
-  .role-screen {
-    min-height: 80vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 16px;
-    padding: 40px 20px;
-  }
-
-  .role-screen h2 {
-    font-size: 20px;
-    font-weight: 400;
-    margin-bottom: 24px;
-    text-align: center;
-  }
-
-  .role-card {
-    width: 100%;
-    max-width: 280px;
-    padding: 24px;
-    background: #fff;
-    border: 1px solid #ececec;
-    border-radius: 16px;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: center;
-  }
-
-  .role-card:hover {
-    border-color: #1a1a1a;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
-  }
-
-  .role-card .role-name { font-size: 18px; font-weight: 500; margin-bottom: 6px; }
-  .role-card .role-desc { font-size: 13px; color: #999; line-height: 1.4; }
-
   .role-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     margin-bottom: 20px;
     padding: 0 4px;
   }
@@ -78,18 +37,6 @@
   }
 
   .role-badge strong { color: #1a1a1a; font-weight: 600; }
-
-  .switch-role {
-    background: none;
-    border: none;
-    color: #999;
-    font-size: 11px;
-    cursor: pointer;
-    padding: 4px 8px;
-    text-decoration: underline;
-  }
-
-  .switch-role:hover { color: #1a1a1a; }
 
   .input-block {
     background: #fff;
@@ -328,23 +275,10 @@
 </head>
 <body>
 
-<div class="role-screen" id="roleScreen" style="display:none;">
-  <h2>Кто пользуется?</h2>
-  <div class="role-card" onclick="setRole('owner')">
-    <div class="role-name">Денис</div>
-    <div class="role-desc">Добавляю и редактирую расходы</div>
-  </div>
-  <div class="role-card" onclick="setRole('verifier')">
-    <div class="role-name">Жена</div>
-    <div class="role-desc">Подтверждаю получение</div>
-  </div>
-</div>
-
-<div class="container" id="mainScreen" style="display:none;">
+<div class="container">
 
   <div class="role-header">
     <div class="role-badge">Вы: <strong id="currentRoleName"></strong></div>
-    <button class="switch-role" onclick="resetRole()">сменить</button>
   </div>
 
   <div class="input-block" id="inputBlock">
@@ -364,32 +298,12 @@
 <div class="sync" id="sync">Синхронизировано</div>
 
 <script>
-  const ROLE_KEY = 'expense-role-v5';
   let expenses = [];
-  let role = null;
+  const role = location.pathname.replace(/\/$/, '').toLowerCase() === '/wife' ? 'verifier' : 'owner';
 
-  function setRole(r) {
-    role = r;
-    localStorage.setItem(ROLE_KEY, r);
-    showApp();
-  }
-
-  function resetRole() {
-    localStorage.removeItem(ROLE_KEY);
-    role = null;
-    document.getElementById('mainScreen').style.display = 'none';
-    document.getElementById('roleScreen').style.display = 'flex';
-  }
-
-  function showApp() {
-    document.getElementById('roleScreen').style.display = 'none';
-    document.getElementById('mainScreen').style.display = 'block';
-    document.getElementById('currentRoleName').textContent = role === 'owner' ? 'Денис' : 'Жена';
-    document.getElementById('inputBlock').style.display = role === 'owner' ? 'block' : 'none';
-    const today = new Date();
-    document.getElementById('date').value = today.toISOString().slice(0, 10);
-    load();
-  }
+  document.getElementById('currentRoleName').textContent = role === 'owner' ? 'Денис' : 'Жена';
+  document.getElementById('inputBlock').style.display = role === 'owner' ? 'block' : 'none';
+  document.getElementById('date').value = new Date().toISOString().slice(0, 10);
 
   // === API: Vercel KV через serverless-функции ===
   async function load() {
@@ -633,21 +547,12 @@
     }).join('');
   }
 
-  window.setRole = setRole;
-  window.resetRole = resetRole;
   window.accept = accept;
   window.del = del;
   window.editAmount = editAmount;
   window.editDate = editDate;
 
-  const savedRole = localStorage.getItem(ROLE_KEY);
-  if (savedRole === 'owner' || savedRole === 'verifier') {
-    role = savedRole;
-    showApp();
-  } else {
-    document.getElementById('roleScreen').style.display = 'flex';
-  }
-
+  load();
   setInterval(poll, 5000);
 </script>
 
