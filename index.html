@@ -88,6 +88,21 @@
 
   .date-input:focus { outline: none; border-color: #1a1a1a; }
 
+  .comment-input {
+    width: 100%;
+    border: 1px solid #ececec;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+    background: #fafafa;
+  }
+
+  .comment-input:focus { outline: none; border-color: #1a1a1a; }
+  .comment-input::placeholder { color: #bbb; }
+
   .add-btn {
     width: 100%;
     padding: 16px;
@@ -163,6 +178,19 @@
   .expense-date.editable { cursor: text; }
   .expense-date.editable:hover { color: #1a1a1a; }
 
+  .expense-comment {
+    font-size: 13px;
+    color: #666;
+    margin-top: 4px;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  .expense-comment.editable { cursor: text; }
+  .expense-comment.editable:hover { color: #1a1a1a; }
+  .expense-comment.empty { color: #bbb; }
+  .expense-comment.empty:hover { color: #666; }
+
   .expense-actions {
     display: flex;
     align-items: center;
@@ -234,6 +262,18 @@
     font-size: 12px;
   }
 
+  .edit-comment-input {
+    width: 100%;
+    border: 1px solid #1a1a1a;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: #1a1a1a;
+  }
+
+  .edit-comment-input:focus { outline: none; }
+
   .months {
     background: #fff;
     border: 1px solid #ececec;
@@ -295,6 +335,7 @@
 
   <div class="input-block" id="inputBlock">
     <input type="number" class="amount-input" id="amount" placeholder="€ 0" step="0.01" inputmode="decimal">
+    <input type="text" class="comment-input" id="comment" placeholder="Комментарий (необязательно)" maxlength="200">
     <input type="date" class="date-input" id="date">
     <button class="add-btn" id="addBtn">Добавить</button>
   </div>
@@ -374,26 +415,37 @@
   document.getElementById('amount').addEventListener('keypress', e => {
     if (e.key === 'Enter') add();
   });
+  document.getElementById('comment').addEventListener('keypress', e => {
+    if (e.key === 'Enter') add();
+  });
+
+  function escapeHTML(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
 
   async function add() {
     if (role !== 'owner') return;
     const amountEl = document.getElementById('amount');
     const dateEl = document.getElementById('date');
+    const commentEl = document.getElementById('comment');
     const amount = parseFloat(amountEl.value);
     if (!amount || amount <= 0) { amountEl.focus(); return; }
 
     const dateStr = dateEl.value;
     const date = dateStr ? new Date(dateStr + 'T12:00:00').toISOString() : new Date().toISOString();
+    const comment = commentEl.value.trim() || null;
 
     expenses.unshift({
       id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
       amount,
+      comment,
       date,
       accepted: false,
       acceptedAt: null
     });
 
     amountEl.value = '';
+    commentEl.value = '';
     await save();
     render();
   }
@@ -474,6 +526,34 @@
     });
   }
 
+  function editComment(id) {
+    if (role !== 'owner') return;
+    const e = expenses.find(x => x.id === id);
+    if (!e) return;
+
+    const el = document.querySelector(`[data-comment="${id}"]`);
+    const current = e.comment || '';
+    el.innerHTML = `<input type="text" class="edit-comment-input" value="${escapeHTML(current)}" id="editc-${id}" maxlength="200" placeholder="Комментарий">`;
+    const input = document.getElementById(`editc-${id}`);
+    input.focus();
+    input.select();
+
+    const finish = async () => {
+      const newVal = input.value.trim() || null;
+      if (newVal !== (e.comment || null)) {
+        e.comment = newVal;
+        await save();
+      }
+      render();
+    };
+
+    input.addEventListener('blur', finish);
+    input.addEventListener('keypress', ev => {
+      if (ev.key === 'Enter') input.blur();
+      if (ev.key === 'Escape') render();
+    });
+  }
+
   function fmt(n) {
     return '€ ' + n.toLocaleString('ru-RU', {
       minimumFractionDigits: n % 1 ? 2 : 0,
@@ -501,12 +581,16 @@
       const canVerify = role === 'verifier';
 
       list.innerHTML = expenses.map(e => {
+        const commentBlock = e.comment
+          ? `<div class="expense-comment ${canEdit ? 'editable' : ''}" data-comment="${e.id}" ${canEdit ? `onclick="editComment('${e.id}')"` : ''}>${escapeHTML(e.comment)}</div>`
+          : (canEdit ? `<div class="expense-comment editable empty" data-comment="${e.id}" onclick="editComment('${e.id}')">+ комментарий</div>` : '');
         return `
           <div class="expense ${e.accepted ? 'accepted' : ''}">
             <div class="expense-info">
               <div class="expense-amount ${e.accepted ? 'accepted' : ''} ${canEdit ? 'editable' : ''}"
                    data-amount="${e.id}"
                    ${canEdit ? `onclick="editAmount('${e.id}')"` : ''}>${fmt(e.amount)}</div>
+              ${commentBlock}
               <div class="expense-date ${canEdit ? 'editable' : ''}"
                    data-date="${e.id}"
                    ${canEdit ? `onclick="editDate('${e.id}')"` : ''}>${fmtDate(e.date)}${e.accepted ? ' · ✓ принято' : ''}</div>
@@ -562,6 +646,7 @@
   window.del = del;
   window.editAmount = editAmount;
   window.editDate = editDate;
+  window.editComment = editComment;
 
   load();
   setInterval(poll, 5000);
