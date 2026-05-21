@@ -36,7 +36,7 @@
   .container { max-width: 520px; margin: 0 auto; }
 
   .role-header {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
     padding: 0 4px;
   }
 
@@ -49,6 +49,36 @@
   }
 
   .role-badge strong { color: #1a1a1a; font-weight: 600; }
+
+  .grand-total {
+    text-align: center;
+    margin-bottom: 28px;
+    padding: 8px 0 12px;
+  }
+
+  .grand-total-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #999;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .grand-total-value {
+    font-size: 36px;
+    font-weight: 300;
+    color: #1a1a1a;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .grand-total-accepted {
+    font-size: 12px;
+    color: #5a8a5a;
+    margin-top: 6px;
+    min-height: 14px;
+  }
 
   .input-block {
     background: #fff;
@@ -332,6 +362,12 @@
     <div class="role-badge">Вы: <strong id="currentRoleName"></strong></div>
   </div>
 
+  <div class="grand-total">
+    <div class="grand-total-label">Итого</div>
+    <div class="grand-total-value" id="grandTotal">€ 0</div>
+    <div class="grand-total-accepted" id="grandAccepted"></div>
+  </div>
+
   <div class="input-block" id="inputBlock">
     <input type="number" class="amount-input" id="amount" placeholder="€ 0" step="0.01" inputmode="decimal">
     <input type="text" class="comment-input" id="comment" placeholder="Комментарий (необязательно)" maxlength="200">
@@ -571,7 +607,19 @@
     return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: d.getFullYear() !== today.getFullYear() ? 'numeric' : undefined });
   }
 
+  function renderGrandTotal() {
+    const total = expenses.reduce((s, e) => s + e.amount, 0);
+    const accepted = expenses.reduce((s, e) => s + (e.accepted ? e.amount : 0), 0);
+    document.getElementById('grandTotal').textContent = fmt(total);
+    const acc = document.getElementById('grandAccepted');
+    if (total === 0) acc.textContent = '';
+    else if (accepted === 0) acc.textContent = '';
+    else if (accepted === total) acc.textContent = '✓ всё принято';
+    else acc.textContent = `✓ ${fmt(accepted)} принято`;
+  }
+
   function render() {
+    renderGrandTotal();
     const list = document.getElementById('expenseList');
     if (expenses.length === 0) {
       list.innerHTML = '<div class="empty">Пока нет записей</div>';
