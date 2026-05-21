@@ -303,8 +303,7 @@
     color: #1a1a1a;
   }
 
-  .month-total .accepted-part { color: #5a8a5a; font-weight: 500; }
-  .month-total .pending-part { color: #999; font-weight: 400; font-size: 13px; }
+  .month-total .accepted-part { color: #5a8a5a; font-weight: 400; font-size: 13px; margin-left: 6px; }
 
   .sync {
     position: fixed;
@@ -629,14 +628,16 @@
 
     el.innerHTML = sorted.map(k => {
       const m = months[k];
-      const pending = m.total - m.accepted;
+      let acceptedMark = '';
+      if (m.accepted > 0) {
+        acceptedMark = m.accepted === m.total
+          ? '<span class="accepted-part">✓</span>'
+          : `<span class="accepted-part">✓ ${fmt(m.accepted)}</span>`;
+      }
       return `
         <div class="month-row">
           <span class="month-name">${m.name}</span>
-          <span class="month-total">
-            <span class="accepted-part">${fmt(m.accepted)}</span>
-            ${pending > 0 ? `<span class="pending-part"> / ${fmt(m.total)}</span>` : ''}
-          </span>
+          <span class="month-total">${fmt(m.total)}${acceptedMark}</span>
         </div>
       `;
     }).join('');
