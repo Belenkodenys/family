@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Расходы</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #fafafa;
+    color: #1a1a1a;
+    min-height: 100vh;
+    padding: 24px 20px 60px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container { max-width: 520px; margin: 0 auto; }
+
+  /* Выбор роли (первый экран) */
+  .role-screen {
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    padding: 40px 20px;
+  }
+
+  .role-screen h2 {
+    font-size: 20px;
+    font-weight: 400;
+    color: #1a1a1a;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  .role-card {
+    width: 100%;
+    max-width: 280px;
+    padding: 24px;
+    background: #fff;
+    border: 1px solid #ececec;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .role-card:hover {
+    border-color: #1a1a1a;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  }
+
+  .role-card .role-name {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .role-card .role-desc {
+    font-size: 13px;
+    color: #999;
+    line-height: 1.4;
+  }
+
+  /* Шапка с ролью */
+  .role-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 4px;
+  }
+
+  .role-badge {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #666;
+    font-weight: 500;
+  }
+
+  .role-badge strong {
+    color: #1a1a1a;
+    font-weight: 600;
+  }
+
+  .switch-role {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 4px 8px;
+    text-decoration: underline;
+  }
+
+  .switch-role:hover { color: #1a1a1a; }
+
+  /* Форма ввода */
+  .input-block {
+    background: #fff;
+    border: 1px solid #ececec;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  }
+
+  .amount-input {
+    width: 100%;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 42px;
+    font-weight: 300;
+    text-align: center;
+    color: #1a1a1a;
+    padding: 16px 0 8px;
+    letter-spacing: -0.02em;
+  }
+
+  .amount-input:focus { outline: none; }
+  .amount-input::placeholder { color: #d4d4d4; }
+
+  .date-input {
+    width: 100%;
+    border: 1px solid #ececec;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 12px;
+    background: #fafafa;
+  }
+
+  .date-input:focus { outline: none; border-color: #1a1a1a; }
+
+  .add-btn {
+    width: 100%;
+    padding: 16px;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .add-btn:hover { background: #000; }
+  .add-btn:active { transform: scale(0.99); }
+
+  /* Список */
+  .list-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #999;
+    margin-bottom: 12px;
+    padding-left: 4px;
+    font-weight: 500;
+  }
+
+  .expense-list {
+    background: #fff;
+    border: 1px solid #ececec;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+
+  .expense {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f4f4f4;
+    transition: background 0.15s;
+  }
+
+  .expense:last-child { border-bottom: none; }
+  .expense.accepted { background: #fafff8; }
+
+  .expense-info { flex: 1; min-width: 0; }
+
+  .expense-amount {
+    font-size: 18px;
+    font-weight: 500;
+    color: #1a1a1a;
+    letter-spacing: -0.01em;
+    cursor: text;
+  }
+
+  .expense-amount.editable:hover {
+    background: #f4f4f4;
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin: -2px -6px;
+  }
+
+  .expense-amount.accepted { color: #5a8a5a; cursor: default; }
+
+  .expense-date {
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+    cursor: text;
+  }
+
+  .expense-date.editable:hover {
+    color: #1a1a1a;
+  }
+
+  .expense-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .accept-btn {
+    background: #fff;
+    border: 1px solid #d4e8d4;
+    color: #5a8a5a;
+    padding: 8px 14px;
+    border-radius: 100px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .accept-btn:hover {
+    background: #5a8a5a;
+    color: #fff;
+    border-color: #5a8a5a;
+  }
+
+  .accepted-mark {
+    color: #5a8a5a;
+    font-size: 14px;
+    padding: 0 8px;
+  }
+
+  .delete-btn {
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px 8px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+
+  .delete-btn:hover { color: #d44; }
+
+  .empty {
+    padding: 48px 20px;
+    text-align: center;
+    color: #bbb;
+    font-size: 14px;
+  }
+
+  /* Inline edit */
+  .edit-input {
+    border: 1px solid #1a1a1a;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    width: 120px;
+  }
+
+  .edit-input:focus { outline: none; }
+
+  .edit-date-input {
+    border: 1px solid #1a1a1a;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+  }
+
+  /* Месячные итоги */
+  .months {
+    background: #fff;
+    border: 1px solid #ececec;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .month-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 14px 20px;
+    border-bottom: 1px solid #f4f4f4;
+  }
+
+  .month-row:last-child { border-bottom: none; }
+
+  .month-name {
+    font-size: 14px;
+    color: #666;
+    text-transform: capitalize;
+  }
+
+  .month-total {
+    font-size: 15px;
+    font-weight: 500;
+    color: #1a1a1a;
+  }
+
+  .month-total .accepted-part { color: #5a8a5a; font-weight: 500; }
+  .month-total .pending-part { color: #999; font-weight: 400; font-size: 13px; }
+
+  /* Sync */
+  .sync {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a1a1a;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 100px;
+    font-size: 11px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+
+  .sync.visible { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- Экран выбора роли -->
+<div class="role-screen" id="roleScreen" style="display:none;">
+  <h2>Кто пользуется?</h2>
+  <div class="role-card" onclick="setRole('owner')">
+    <div class="role-name">Денис</div>
+    <div class="role-desc">Добавляю и редактирую расходы</div>
+  </div>
+  <div class="role-card" onclick="setRole('verifier')">
+    <div class="role-name">Жена</div>
+    <div class="role-desc">Подтверждаю получение</div>
+  </div>
+</div>
+
+<!-- Основной экран -->
+<div class="container" id="mainScreen" style="display:none;">
+
+  <div class="role-header">
+    <div class="role-badge">Вы: <strong id="currentRoleName"></strong></div>
+    <button class="switch-role" onclick="resetRole()">сменить</button>
+  </div>
+
+  <!-- Форма только для Дениса -->
+  <div class="input-block" id="inputBlock">
+    <input type="number" class="amount-input" id="amount" placeholder="€ 0" step="0.01" inputmode="decimal">
+    <input type="date" class="date-input" id="date">
+    <button class="add-btn" id="addBtn">Добавить</button>
+  </div>
+
+  <div class="list-title">Расходы</div>
+  <div class="expense-list" id="expenseList"></div>
+
+  <div class="list-title">По месяцам</div>
+  <div class="months" id="months"></div>
+
+</div>
+
+<div class="sync" id="sync">Синхронизировано</div>
+
+<script>
+  const STORAGE_KEY = 'family-expenses-v4';
+  const ROLE_KEY = 'expense-role-v4';
+  let expenses = [];
+  let role = null; // 'owner' | 'verifier'
+
+  // === РОЛИ ===
+  function setRole(r) {
+    role = r;
+    localStorage.setItem(ROLE_KEY, r);
+    showApp();
+  }
+
+  function resetRole() {
+    localStorage.removeItem(ROLE_KEY);
+    role = null;
+    document.getElementById('mainScreen').style.display = 'none';
+    document.getElementById('roleScreen').style.display = 'flex';
+  }
+
+  function showApp() {
+    document.getElementById('roleScreen').style.display = 'none';
+    document.getElementById('mainScreen').style.display = 'block';
+    document.getElementById('currentRoleName').textContent = role === 'owner' ? 'Денис' : 'Жена';
+    document.getElementById('inputBlock').style.display = role === 'owner' ? 'block' : 'none';
+    // Установим дату по умолчанию = сегодня
+    const today = new Date();
+    document.getElementById('date').value = today.toISOString().slice(0, 10);
+    load();
+  }
+
+  // === ХРАНИЛИЩЕ ===
+  async function load() {
+    try {
+      const r = await window.storage.get(STORAGE_KEY, true);
+      if (r && r.value) expenses = JSON.parse(r.value);
+    } catch (e) { expenses = []; }
+    render();
+  }
+
+  async function save() {
+    try {
+      await window.storage.set(STORAGE_KEY, JSON.stringify(expenses), true);
+      showSync();
+    } catch (e) { console.error(e); }
+  }
+
+  function showSync() {
+    const el = document.getElementById('sync');
+    el.classList.add('visible');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('visible'), 1200);
+  }
+
+  async function poll() {
+    if (!role) return;
+    try {
+      const r = await window.storage.get(STORAGE_KEY, true);
+      if (r && r.value) {
+        const remote = JSON.parse(r.value);
+        if (JSON.stringify(remote) !== JSON.stringify(expenses)) {
+          expenses = remote;
+          render();
+        }
+      }
+    } catch (e) {}
+  }
+
+  // === ДОБАВЛЕНИЕ ===
+  document.getElementById('addBtn').addEventListener('click', add);
+  document.getElementById('amount').addEventListener('keypress', e => {
+    if (e.key === 'Enter') add();
+  });
+
+  async function add() {
+    if (role !== 'owner') return;
+    const amountEl = document.getElementById('amount');
+    const dateEl = document.getElementById('date');
+    const amount = parseFloat(amountEl.value);
+    if (!amount || amount <= 0) { amountEl.focus(); return; }
+
+    const dateStr = dateEl.value;
+    const date = dateStr ? new Date(dateStr + 'T12:00:00').toISOString() : new Date().toISOString();
+
+    expenses.unshift({
+      id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+      amount,
+      date,
+      accepted: false,
+      acceptedAt: null
+    });
+
+    amountEl.value = '';
+    await save();
+    render();
+  }
+
+  // === ПОДТВЕРЖДЕНИЕ (только жена) ===
+  async function accept(id) {
+    if (role !== 'verifier') return;
+    const e = expenses.find(x => x.id === id);
+    if (!e || e.accepted) return;
+    if (!confirm('Подтвердить получение? Отметку нельзя будет изменить.')) return;
+    e.accepted = true;
+    e.acceptedAt = new Date().toISOString();
+    await save();
+    render();
+  }
+
+  // === УДАЛЕНИЕ (только Денис, до подтверждения) ===
+  async function del(id) {
+    if (role !== 'owner') return;
+    const e = expenses.find(x => x.id === id);
+    if (!e || e.accepted) return;
+    if (!confirm('Удалить запись?')) return;
+    expenses = expenses.filter(x => x.id !== id);
+    await save();
+    render();
+  }
+
+  // === РЕДАКТИРОВАНИЕ (только Денис, до подтверждения) ===
+  function editAmount(id) {
+    if (role !== 'owner') return;
+    const e = expenses.find(x => x.id === id);
+    if (!e || e.accepted) return;
+
+    const el = document.querySelector(`[data-amount="${id}"]`);
+    const current = e.amount;
+    el.innerHTML = `<input type="number" class="edit-input" value="${current}" step="0.01" id="edit-${id}">`;
+    const input = document.getElementById(`edit-${id}`);
+    input.focus();
+    input.select();
+
+    const finish = async () => {
+      const newVal = parseFloat(input.value);
+      if (newVal && newVal > 0 && newVal !== current) {
+        e.amount = newVal;
+        await save();
+      }
+      render();
+    };
+
+    input.addEventListener('blur', finish);
+    input.addEventListener('keypress', ev => {
+      if (ev.key === 'Enter') input.blur();
+      if (ev.key === 'Escape') render();
+    });
+  }
+
+  function editDate(id) {
+    if (role !== 'owner') return;
+    const e = expenses.find(x => x.id === id);
+    if (!e || e.accepted) return;
+
+    const el = document.querySelector(`[data-date="${id}"]`);
+    const current = new Date(e.date).toISOString().slice(0, 10);
+    el.innerHTML = `<input type="date" class="edit-date-input" value="${current}" id="editdate-${id}">`;
+    const input = document.getElementById(`editdate-${id}`);
+    input.focus();
+
+    const finish = async () => {
+      const newDate = input.value;
+      if (newDate && newDate !== current) {
+        e.date = new Date(newDate + 'T12:00:00').toISOString();
+        await save();
+      }
+      render();
+    };
+
+    input.addEventListener('blur', finish);
+    input.addEventListener('change', finish);
+    input.addEventListener('keypress', ev => {
+      if (ev.key === 'Escape') render();
+    });
+  }
+
+  // === ФОРМАТТЕРЫ ===
+  function fmt(n) {
+    return '€ ' + n.toLocaleString('ru-RU', {
+      minimumFractionDigits: n % 1 ? 2 : 0,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    const today = new Date();
+    const isToday = d.toDateString() === today.toDateString();
+    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+    const isYesterday = d.toDateString() === yesterday.toDateString();
+    if (isToday) return 'сегодня';
+    if (isYesterday) return 'вчера';
+    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: d.getFullYear() !== today.getFullYear() ? 'numeric' : undefined });
+  }
+
+  // === РЕНДЕР ===
+  function render() {
+    const list = document.getElementById('expenseList');
+    if (expenses.length === 0) {
+      list.innerHTML = '<div class="empty">Пока нет записей</div>';
+    } else {
+      const canEdit = role === 'owner';
+      const canVerify = role === 'verifier';
+
+      list.innerHTML = expenses.map(e => {
+        const editable = canEdit && !e.accepted;
+        return `
+          <div class="expense ${e.accepted ? 'accepted' : ''}">
+            <div class="expense-info">
+              <div class="expense-amount ${e.accepted ? 'accepted' : ''} ${editable ? 'editable' : ''}"
+                   data-amount="${e.id}"
+                   ${editable ? `onclick="editAmount('${e.id}')"` : ''}>${fmt(e.amount)}</div>
+              <div class="expense-date ${editable ? 'editable' : ''}"
+                   data-date="${e.id}"
+                   ${editable ? `onclick="editDate('${e.id}')"` : ''}>${fmtDate(e.date)}${e.accepted ? ' · ✓ принято' : ''}</div>
+            </div>
+            <div class="expense-actions">
+              ${canVerify && !e.accepted ? `<button class="accept-btn" onclick="accept('${e.id}')">Принято</button>` : ''}
+              ${e.accepted ? '<span class="accepted-mark">✓</span>' : ''}
+              ${canEdit && !e.accepted ? `<button class="delete-btn" onclick="del('${e.id}')" title="Удалить">×</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    renderMonths();
+  }
+
+  function renderMonths() {
+    const months = {};
+    expenses.forEach(e => {
+      const d = new Date(e.date);
+      const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      const name = d.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+      if (!months[key]) months[key] = { name, total: 0, accepted: 0 };
+      months[key].total += e.amount;
+      if (e.accepted) months[key].accepted += e.amount;
+    });
+
+    const sorted = Object.keys(months).sort().reverse();
+    const el = document.getElementById('months');
+
+    if (sorted.length === 0) {
+      el.innerHTML = '<div class="empty">—</div>';
+      return;
+    }
+
+    el.innerHTML = sorted.map(k => {
+      const m = months[k];
+      const pending = m.total - m.accepted;
+      return `
+        <div class="month-row">
+          <span class="month-name">${m.name}</span>
+          <span class="month-total">
+            <span class="accepted-part">${fmt(m.accepted)}</span>
+            ${pending > 0 ? `<span class="pending-part"> / ${fmt(m.total)}</span>` : ''}
+          </span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Глобальные функции для onclick
+  window.setRole = setRole;
+  window.resetRole = resetRole;
+  window.accept = accept;
+  window.del = del;
+  window.editAmount = editAmount;
+  window.editDate = editDate;
+
+  // === СТАРТ ===
+  const savedRole = localStorage.getItem(ROLE_KEY);
+  if (savedRole === 'owner' || savedRole === 'verifier') {
+    role = savedRole;
+    showApp();
+  } else {
+    document.getElementById('roleScreen').style.display = 'flex';
+  }
+
+  setInterval(poll, 5000);
+</script>
+
+</body>
+</html>
