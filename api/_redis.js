@@ -1,20 +1,22 @@
-import { createClient } from 'redis';
+import Redis from 'ioredis';
 
 let client = null;
 
-export async function getRedis() {
-  if (client && client.isOpen) return client;
+export function getRedis() {
+  if (client) return client;
 
-  client = createClient({
-    url: process.env.REDIS_URL,
-    socket: {
-      tls: process.env.REDIS_URL?.startsWith('rediss://'),
-      reconnectStrategy: false
-    }
+  const url = process.env.REDIS_URL;
+  if (!url) {
+    throw new Error('REDIS_URL is not set');
+  }
+
+  client = new Redis(url, {
+    maxRetriesPerRequest: 3,
+    enableReadyCheck: false,
+    lazyConnect: false
   });
 
-  client.on('error', (err) => console.error('Redis error:', err));
+  client.on('error', (err) => console.error('Redis error:', err.message));
 
-  await client.connect();
   return client;
 }
